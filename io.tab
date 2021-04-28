@@ -1,0 +1,15 @@
+2	dirEnable	OUTPUT
+3	sens1	INPUT_PULLUP
+4	sens2	INPUT_PULLUP
+5	sens3	INPUT_PULLUP
+6	sens4	INPUT_PULLUP
+7	greenLed	OUTPUT
+8	redLed	OUTPUT
+9	onSwitch	INPUT_PULLUP
+10	recordSwitch	INPUT_PULLUP
+11	power	OUTPUT
+12	dirLeft	OUTPUT
+13	dirRight	OUTPUT
+A0	channelSelect	INPUT
+A6	speedKnob	INPUT
+A7	currentSens	INPUT
