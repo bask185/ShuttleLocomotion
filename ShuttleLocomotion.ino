@@ -4,7 +4,16 @@
 #include "src/modules/Weistra.h"
 #include "src/modules/debounceClass.h"
 #include "src/modules/shortCircuit.h"
+#include "recorder.h"
 
+Recorder recorder[] =
+{
+    Recorder( 0x50 ), 
+    Recorder( 0x51 ), 
+    Recorder( 0x52 ), 
+    Recorder( 0x53 )
+} ;
+uint8_t channel  = 0;
 
 
 // constructors
@@ -15,6 +24,23 @@ Debounce on_off( onSwitch ) ;
 Debounce record( recordSwitch ) ;
 
 int8_t speed ;
+
+struct {
+    uint8_t speed ;
+    uint8_t function ;
+    uint8_t accessory ;
+    uint8_t locospeed ;
+    uint8_t state ;
+} event ;
+
+void clearEvent()
+{
+    event.speed = 0 ;
+    event.function = 0 ;
+    event.accessory = 0 ;
+    event.locospeed = 0 ;
+    event.state = 0 ;
+}
 
 
 // SENSORS 
@@ -68,16 +94,16 @@ void readSwitches()
     record.debounceInputs() ;
     END_REPEAT
     
-    on_off_state = on_off.read() ;
-    record_state = record.read() ;
+    on_off_state = on_off.readInput() ;
+    record_state = record.readInput() ;
 }
 
 // blink led code
-uint8_t greenLedOffTime[]   = {100, 200, } ;
-uint8_t greenLedOnTime[]    = {100, 200, } ;
+uint8_t greenLedOffTime[]   = {100, 200 } ; // enter more number here is groups of 2
+uint8_t greenLedOnTime[]    = {100, 200 } ;
 
-uint8_t redLedOffTime[]     = {100, 200, } ;
-uint8_t redLedOnTime[]      = {100, 200, } ;
+uint8_t redLedOffTime[]     = {100, 200 } ;
+uint8_t redLedOnTime[]      = {100, 200 } ;
 
 void blinkLeds()
 {
@@ -109,11 +135,52 @@ void blinkLeds()
     }
 }
 
+void selectChannel()
+{
+    REPEAT_MS( 100 ) ;
+    channel = analogRead( channelSelectPin ) / 0x100 ;
+    END_REPEAT
+}
+
 void recordPrograms()
 {
+    uint8_t mode = recorder[ channel ].getMode() ;
+    if( record_state == FALLING )              // IF BUTTON IS PRESSED
+    {
+        if(      mode == idle       ) recorder[ channel ].startRecording() ;
+        else if( mode == recording  ) recorder[ channel ].stopRecording() ;
+        else
+        {
+            // mode must be playing, so an error blink will suffice
+        }
+    }
+    if( mode == recording )
+    {
+        if( event.sensor )       recorder[ channel ].SensorEvent(        event.sensor    , event.state ) ;
+        if( event.locoSpeed )    recorder[ channel ].LocoSpeedEvent(     event.loco      , event.speed ) ;
+        if( event.function )     recorder[ channel ].LocoFunctionEvent(  event.loco      , event.function | (event.state << 7) ) ;
+        if( event.accessory )    recorder[ channel ].AccessoryEvent(     event.accessory , event.state ) ;
+        
+        clearEvent() ;
+    }
 }
+
 void playPrograms()
 {
+    uint8_t mode = recorder[ channel ].getMode() ;
+    if( on_off_state == FALLING )              // IF BUTTON IS PRESSED
+    {
+        if( mode == idle ) recorder[ channel ].StartPlaying() ;
+        else
+        {
+            // recorder is either already playing or recording, error blink needed
+        }
+    }
+    
+    if( mode == playing )
+    {
+        
+    }
 } 
 
 // analog train controls
@@ -156,8 +223,9 @@ void setup()
     initTimers() ;
     initIO() ;
     initSensors() ;
-    // Xpressnet.init() ;
-    // weistra.begin() ;
+    
+    XpressNet.start(XNetAddress, 3);
+    weistra.begin() ;
     // shortCircuit.begin() ;
 }
 

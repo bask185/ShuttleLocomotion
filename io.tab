@@ -10,6 +10,6 @@
 11	power	OUTPUT
 12	dirLeft	OUTPUT
 13	dirRight	OUTPUT
-A0	channelSelect	INPUT
+A0	channelSelectPin	INPUT
 A6	speedKnob	INPUT
 A7	currentSens	INPUT
