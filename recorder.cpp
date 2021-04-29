@@ -1,10 +1,15 @@
 #include "log.h"
 #include <Wire.h>
 
+
+    
+
 // only use 0x50 <> 0x53
 Recorder:Recorder( uint8_t _I2Caddress ) 
 {
     I2Caddress = _I2Caddress ;
+    
+    state = getEvent ;
 }
 
 uint8_t Recorder::StartRecording() 
@@ -47,45 +52,7 @@ uint8_t Recorder::StopPlaying( )
 }
 
 
-uint8_t Recorder::GetNextEvent( uint8_t *retVal1, uint8_t *retVal2, uint8_t *retVal3 )
-{
-    uint8_t nArguments = 0 ;
-    
-    Wire.beginTransmission( I2Caddress ) ;
-    Wire.write( eeAddress++ ) ;
-    Wire.endTransmission() ;
-    
-    Wire.requestFrom( I2Caddress, 1; ) ;
-    uint8_t nextEvent = Wire.read() ;                       // fetch next event
-    
-    switch( nextEvent )
-    {
-        case timeExpireEvent:   nArguments = 3 ; break ;    // time + time + time
-        case locoFunctionEvent:                             // address + state|function
-        case locoSpeedEvent:                                // address + speed
-        case accessoryEvent:    nArguments = 2 ; break ;    // address + state
-        case sensorEvent:       nArguments = 1 ; break ;    // state|sensor
-        case stopEvent:         nArguments = 0 ; break ;    // N/A
-    }
-    
-    
-    
-    if( nArguments )                                        // if atleast one argument, initiate the request
-    {
-        Wire.beginTransmission( I2Caddress ) ;
-        Wire.write( eeAddress ) ;
-        Wire.endTransmission() ;
-        Wire.requestFrom( I2Caddress, nArguments; ) ;
-        
-        if( nArguments > 0 ) { *retVal1 = Wire.read() ; eeAddress ++ ; } // always true...
-        if( nArguments > 1 ) { *retVal2 = Wire.read() ; eeAddress ++ ; }
-        if( nArguments > 2 ) { *retVal3 = Wire.read() ; eeAddress ++ ; }
-    }
-    
-    return instruction ;
-}
-
-
+// RECORDING FUNCTIONS
 void Recorder::LogTime( )
 {
     uint32_t currentTime = millis() ;
@@ -182,5 +149,6 @@ int16_t Recorder::GetProgramSize( )
         uint8_t b = Wire.read() ;
         if( b == stopEvent ) return tempAddress ;
     }
-    return -1 ;                                             
+    return -1 ;
 }
+

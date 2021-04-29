@@ -6,6 +6,7 @@
 #include "src/modules/shortCircuit.h"
 #include "recorder.h"
 
+const int nChannels = 4 ;
 Recorder recorder[] =
 {
     Recorder( 0x50 ), 
@@ -13,17 +14,7 @@ Recorder recorder[] =
     Recorder( 0x52 ), 
     Recorder( 0x53 )
 } ;
-uint8_t channel  = 0;
-
-
-// constructors
-//Xnet
-// Weista weistra( power ) ;
-//shortCircuit.
-Debounce on_off( onSwitch ) ;
-Debounce record( recordSwitch ) ;
-
-int8_t speed ;
+uint8_t channel = 0;
 
 struct {
     uint8_t speed ;
@@ -31,7 +22,12 @@ struct {
     uint8_t accessory ;
     uint8_t locospeed ;
     uint8_t state ;
-} event ;
+    uint8_t newSpeed ;
+    uint8_t newFunction ;
+    uint8_t newAccessory ;
+    uint8_t newLocospeed ;
+    uint8_t newState ;
+} event[nChannels] ;
 
 void clearEvent()
 {
@@ -41,6 +37,14 @@ void clearEvent()
     event.locospeed = 0 ;
     event.state = 0 ;
 }
+
+
+// constructors
+//Xnet
+// Weista weistra( power ) ;
+//shortCircuit.
+Debounce on_off( onSwitch ) ;
+Debounce record( recordSwitch ) ;
 
 
 // SENSORS 
@@ -177,9 +181,23 @@ void playPrograms()
         }
     }
     
-    if( mode == playing )
+    for( int i = 0 ; i < nChannels ; channel ++ )
     {
-        
+        if( recorder[i].getMode() == playing )
+        {
+            uint8_t arg1, arg2, arg3 ;
+            event.new = recorder[ channel ].GetNextEvent( &arg1, &arg2, &arg3 ) ;
+            
+            switch( event[i].new )
+            {
+                case sensorEvent:       event[i].newSensor    = arg1 & 0x7F ; event[i].newState    = arg2 >> 7 ; break ;
+                case locoSpeedEvent:    event[i].newLoco      = arg1 ;        event[i].newSpeed    = arg2 ;      break ;
+                case locoFunctionEvent: event[i].newLoco      = arg1 ;        event[i].newFunction = arg2 ;      break ;
+                case accessoryEvent:    event[i].newAccessory = arg1 ;        event[i].newState    = arg2 ;      break ;
+                case timeExpireEvent:   event[i].newTime   = (arg3 << 16) | (arg2 << 8) | arg1 ;                 break ;
+                case stopEvent:     /* to be filled in */                                                        break ;
+            }
+        }
     }
 } 
 

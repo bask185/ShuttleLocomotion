@@ -13,7 +13,6 @@ enum events
 enum modes
 {
     idle,
-    playing,
     recording,
 } ;
 
@@ -28,20 +27,16 @@ public:
     void LocoFunctionEvent( uint8_t, uint8_t ) ;
     void AccessoryEvent( uint8_t, uint8_t ) ;
     int16_t GetProgramSize( ) ;
-    
-    uint8_t GetNextEvent( uint8_t*, uint8_t*, uint8_t* )
-    
+        
     uint8_t GetMode( ) ;
     
-    void StartPlaying( ) ;
-    void StopPlaying( ) ;
     
 private:
     uint16_t eeAdress ;
     uint32_t lastTime ;
     uint8_t mode ;
-    uint8_t I2Caddress ;
+   
     
     void logTime() ;
-    void resetTime() ;
+    void resetTime() ;    
 } ;
