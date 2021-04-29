@@ -10,6 +10,21 @@ enum states {
     stopPlaying ,
 } ;
 
+void Player::fetchArguments( uint8_t arguments )
+{
+    if( arguments )                                        // if atleast one argument, initiate the request
+    {
+        Wire.beginTransmission( I2Caddress ) ;
+        Wire.write( eeAddress ) ;
+        Wire.endTransmission() ;
+        Wire.requestFrom( I2Caddress, arguments; ) ;
+        
+        if( arguments > 0 ) { retval[1] = Wire.read() ; eeAddress ++ ; } // always true...
+        if( arguments > 1 ) { retval[2] = Wire.read() ; eeAddress ++ ; }
+        if( arguments > 2 ) { retval[3] = Wire.read() ; eeAddress ++ ; }
+    }
+}
+
 // STATE MACHINE FUNCTIONS
 bool Player::getEventF()
 {
@@ -22,37 +37,57 @@ bool Player::getEventF()
     uint8_t nArguments = 0 ;
     switch( nextEvent )
     {
-        case timeExpireEvent:   nArguments = 3 ; break ;    // time + time + time
-        case locoFunctionEvent:                             // address + state|function
-        case locoSpeedEvent:                                // address + speed
-        case accessoryEvent:    nArguments = 2 ; break ;    // address + state
-        case sensorEvent:       nArguments = 1 ; break ;    // state|sensor
-        case stopEvent:         nArguments = 0 ; break ;    // N/A
+    case timeExpireEvent:                                   // time + time + time
+        fetchArguments(3) ;
+        newTime = ( retval[0]<<16 | retval[1]<<8 | retval[0] ) + millis() ;
+        break ;
+
+    case locoFunctionEvent:                                 // address + state|function
+        fetchArguments(2) ;
+        newLoco     = retval[ 0 ] ;
+        newFunction = retval[ 1 ] & 0x7F ;
+        newState    = retval[ 1 ] >> 7 ;
+        break ;
+ 
+    case locoSpeedEvent:                                    // address + speed
+        fetchArguments(2) ;
+        newLoco     = retval[ 0 ] ;
+        newSpeed    = retval[ 1 ] ; // N.B. SPEED AND DIRECTION STEPS NEED TO BE SOLVED
+        //newDir      = 
+        break ;
+
+    case accessoryEvent:    
+        fetchArguments(2) ;
+        newAccessory = retval[ 0 ] ;
+        newState     = retval[ 1 ] ;
+        break ;
+            // address + state
+    case sensorEvent:       
+        fetchArguments(1) ;
+        newSensor = retval[ 0 ] & 0x7F;
+        newState  = retval[ 1 ] >> 7 ;
+        break ;
+            // state|sensor
+    case stopEvent:         
+        fetchArguments(0) ;
+         
+        break ;
+            // N/A
     }
     
-    if( nArguments )                                        // if atleast one argument, initiate the request
-    {
-        Wire.beginTransmission( I2Caddress ) ;
-        Wire.write( eeAddress ) ;
-        Wire.endTransmission() ;
-        Wire.requestFrom( I2Caddress, nArguments; ) ;
-        
-        if( nArguments > 0 ) { retval[1] = Wire.read() ; eeAddress ++ ; } // always true...
-        if( nArguments > 1 ) { retval[2] = Wire.read() ; eeAddress ++ ; }
-        if( nArguments > 2 ) { retval[3] = Wire.read() ; eeAddress ++ ; }
-    }
+    
     return true ;
 }
 
 bool Player::waitTimeF()
 {
-    if( millis() - lastTime >= timeToRun) return true ;
+    if( millis() >= newTime ) return true ;
     return false ;
 }
 
 bool Player::waitSensorF()
 {
-    if( sens[1].state == newState ) return true ;
+    if( sens[ newSensor ].state == newState ) return true ;
     return false ;
 }
 
@@ -84,8 +119,9 @@ bool Player::setLocoFunctionF()
 
 bool Player::stopPlayingF()
 {
-    // do something
-   return true ;
+   eeAdress = 0 ;
+   if( allowed2run ) return true ;
+   else              return false ;
 }
 
 
@@ -126,3 +162,21 @@ bool Player::stateMachine()
     }
 }
 #undef State
+
+
+
+uint8_t Player::StartPlaying( )
+{
+    if( mode == idle )
+    {
+        eeAddress = 0 ;
+        mode = playing ;
+        return 1 ;
+    }
+    return 0 ;
+}
+
+uint8_t Player::StopPlaying( )
+{
+    return 1 ;
+}

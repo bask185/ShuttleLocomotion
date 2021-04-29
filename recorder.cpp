@@ -36,20 +36,6 @@ uint8_t Recorder::StopRecording( )
     return 1 ;
 }
 
-uint8_t Recorder::StartPlaying( )
-{
-    if( mode == idle )
-    {
-        mode = playing ;
-        return 1 ;
-    }
-    return 0 ;
-}
-
-uint8_t Recorder::StopPlaying( )
-{
-    return 1 ;
-}
 
 
 // RECORDING FUNCTIONS
@@ -63,7 +49,7 @@ void Recorder::LogTime( )
     Wire.beginTransmission( I2Caddress ) ;   // channel is 1-4
     Wire.write( eeAdress ) ;                                // set register
     
-    Wire.write( logTime ) ;    eeAdress ++ ;                // enter instruction followed by time stamp of 3 bytes
+    Wire.write( logTime )    ; eeAdress ++ ;                // enter instruction followed by time stamp of 3 bytes
     Wire.write( time >> 16 ) ; eeAdress ++ ;                // we use 3 bytes for time.
     Wire.write( time >>  8 ) ; eeAdress ++ ; 
     Wire.write( time       ) ; eeAdress ++ ; 
