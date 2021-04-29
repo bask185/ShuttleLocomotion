@@ -1,6 +1,6 @@
 #include "src/basics/timers.h"
 #include "src/basics/io.h"
-//#include "src/modules/XpressNet.h"
+#include "src/modules/XpressNet.h"
 #include "src/modules/Weistra.h"
 #include "src/modules/debounceClass.h"
 #include "src/modules/shortCircuit.h"
@@ -109,7 +109,12 @@ void blinkLeds()
     }
 }
 
-
+void recordPrograms()
+{
+}
+void playPrograms()
+{
+} 
 
 // analog train controls
 const int nSamples = 4 ;
@@ -158,7 +163,7 @@ void setup()
 
 void loop() {
 // handle XpressNet Bus
-    // Xpressnet.receive() ;            // handles XpressNet bus communication
+    Xpressnet.receive() ;            // handles XpressNet bus communication
     // decodeCommands() ;                // process XpressNet commands to monitor updates for trains and turnouts.
     
 // readInput switches
@@ -166,13 +171,13 @@ void loop() {
     readSensors() ;                    // reads and debounces sensors
     
 // run programs
-    // recordPrograms () ;                // record programs
-    // playPrograms() ;                    // play programs
+    recordPrograms () ;                // record programs
+    playPrograms() ;                    // play programs
     blinkLeds() ;
     
 // analog train controls
-    readSpeedKnob() ;                // reads and debounces speed for pwm
-    // weistra.update() ;                 // handles track PWM
-    // shortCircuit() ;                    // monitors current draw and regulates power pin
+    speedControl() ;                // reads and debounces speed for pwm
+    weistra.update() ;                 // handles track PWM
+    shortCircuit() ;                    // monitors current draw and regulates power pin
 
 }
